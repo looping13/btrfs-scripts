@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Check if the root filesystem is using Btrfs
+root_fs=$(findmnt -n -o FSTYPE /)
+if [ "$root_fs" != "btrfs" ]; then
+    echo "Root filesystem is not using Btrfs. This script is only for Btrfs systems."
+    exit 1
+fi
+
+# Find the mount point of the root filesystem
+root_mount_point=$(findmnt -n -o TARGET /)
+
+# Get the current Btrfs subvolume ID mounted as root
+subvolume_id=$(btrfs subvolume show "$root_mount_point" | grep "Subvolume ID" | awk '{print $3}')
+
+# Get the snapshot information from the subvolume
+snapshot_info=$(btrfs subvolume show "$root_mount_point")
+
+# Display the snapshot ID and other relevant info
+echo "Currently used Btrfs snapshot:"
+echo "$snapshot_info"
