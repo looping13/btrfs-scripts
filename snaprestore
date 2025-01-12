@@ -1,9 +1,21 @@
 #!/bin/bash
 
+#Declare colors
+red='\033[0;31m'
+nc='\033[0m'
+yellow='\033[1;33m'
+
+#are you root?
+runas=$(whoami)
+
+#check for Root
+if [ $runas != 'root' ]; then
+    printf "${red} command must be run as root...exiting${nc}\n" && exit 1
+fi
 # Function to list the Btrfs snapshots using subvolume IDs
 list_snapshots() {
     # List all subvolumes on the root subvolume, filter for snapshots, and show IDs
-    sudo btrfs subvolume list / | grep -i "snapshot" | nl -w 2 -s '. ' | awk '{print $1, $9}'
+    btrfs subvolume list / | grep -i "snapshot" | nl -w 2 -s '. ' | awk '{print $1, $9}'
 }
 
 # Function to restore a snapshot by its subvolume ID
@@ -12,35 +24,35 @@ restore_snapshot() {
     local snapshot_subvol_id
 
     # Extract the subvolume ID based on the user input
-    snapshot_subvol_id=$(sudo btrfs subvolume list / | grep -i "snapshot" | sed -n "${snapshot_id}p" | awk '{print $1}')
+    snapshot_subvol_id=$(btrfs subvolume list / | grep -i "snapshot" | sed -n "${snapshot_id}p" | awk '{print $1}')
 
     # Check if snapshot ID exists
     if [[ -z "$snapshot_subvol_id" ]]; then
-        echo "Invalid snapshot ID."
+        printf "${red} Invalid snapshot ID.${nc}\n"
         exit 1
     fi
 
-    echo "Restoring snapshot with ID: $snapshot_subvol_id"
+    printf "${yellow} Restoring snapshot with ID: $snapshot_subvol_id${nc}\n"
 
     # Restore the snapshot over the root subvolume using subvolid
-    sudo btrfs subvolume restore -s subvolid=$snapshot_subvol_id -d subvolid=256  # 256 is typically the root subvolume ID
-
-    echo "Snapshot restored successfully."
+    btrfs subvolume restore -s subvolid=$snapshot_subvol_id -d subvolid=256  # 256 is typically the root subvolume ID
+	btrfs subvolume set-readonly off / -id 256
+    printf "${yellow} Snapshot restored successfully.${nc}\n"
 }
 
 # Main function
 main() {
     # List snapshots by subvolume ID
-    echo "Listing available snapshots on root (using subvolume IDs):"
+    printf "${yellow} Listing available snapshots on root (using subvolume IDs):${nc}\n"
     list_snapshots
 
     # Prompt user for selection
-    echo "Please choose a snapshot by its number (e.g., 1, 2, ...):"
+    printf "${yellow} Please choose a snapshot by its number (e.g., 1, 2, ...):${nc}\n"
     read -p "Snapshot number: " snapshot_id
 
     # Check if input is a valid number
     if ! [[ "$snapshot_id" =~ ^[0-9]+$ ]]; then
-        echo "Invalid input. Please enter a valid snapshot number."
+        printf "${red} Invalid input. Please enter a valid snapshot number.${nc}\n"
         exit 1
     fi
 

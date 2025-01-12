@@ -1,9 +1,22 @@
 #!/bin/bash
 
+#Declare colors
+red='\033[0;31m'
+nc='\033[0m'
+yellow='\033[1;33m'
+
+#are you root?
+runas=$(whoami)
+
+#check for Root
+if [ $runas != 'root' ]; then
+    printf "${red} command must be run as root...exiting${nc}\n" && exit 1
+fi
+
 # Check if the root filesystem is using Btrfs
 root_fs=$(findmnt -n -o FSTYPE /)
 if [ "$root_fs" != "btrfs" ]; then
-    echo "Root filesystem is not using Btrfs. This script is only for Btrfs systems."
+    printf "${red} Root filesystem is not using Btrfs. This script is only for Btrfs systems.${nc}\n"
     exit 1
 fi
 
@@ -17,5 +30,5 @@ subvolume_id=$(btrfs subvolume show "$root_mount_point" | grep "Subvolume ID" | 
 snapshot_info=$(btrfs subvolume show "$root_mount_point")
 
 # Display the snapshot ID and other relevant info
-echo "Currently used Btrfs snapshot:"
+printf "${yellow} Currently used Btrfs snapshot:${nc}\n"
 echo "$snapshot_info"
