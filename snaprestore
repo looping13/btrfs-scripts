@@ -15,7 +15,7 @@ fi
 # Function to list the Btrfs snapshots using subvolume IDs
 list_snapshots() {
     # List all subvolumes on the root subvolume, filter for snapshots, and show IDs
-    btrfs subvolume list / | grep -i "snapshot" | nl -w 2 -s '. ' | awk '{print $1, $9}'
+    btrfs subvolume list / | grep -i "snapshots/" | nl -w 2 -s '. ' | awk '{print $1, $3, $10}'
 }
 
 # Function to restore a snapshot by its subvolume ID
@@ -24,7 +24,7 @@ restore_snapshot() {
     local snapshot_subvol_id
 
     # Extract the subvolume ID based on the user input
-    snapshot_subvol_id=$(btrfs subvolume list / | grep -i "snapshot" | sed -n "${snapshot_id}p" | awk '{print $1}')
+    snapshot_subvol_id=$(btrfs subvolume list / | grep -i "snapshots/" | sed -n "${snapshot_id}p" | awk '{print $1}')
 
     # Check if snapshot ID exists
     if [[ -z "$snapshot_subvol_id" ]]; then
