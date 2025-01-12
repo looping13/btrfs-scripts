@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Function to list the Btrfs snapshots using subvolume IDs
+list_snapshots() {
+    # List all subvolumes on the root subvolume, filter for snapshots, and show IDs
+    sudo btrfs subvolume list / | grep -i "snapshot" | nl -w 2 -s '. ' | awk '{print $1, $9}'
+}
+
+# Function to restore a snapshot by its subvolume ID
+restore_snapshot() {
+    local snapshot_id=$1
+    local snapshot_subvol_id
+
+    # Extract the subvolume ID based on the user input
+    snapshot_subvol_id=$(sudo btrfs subvolume list / | grep -i "snapshot" | sed -n "${snapshot_id}p" | awk '{print $1}')
+
+    # Check if snapshot ID exists
+    if [[ -z "$snapshot_subvol_id" ]]; then
+        echo "Invalid snapshot ID."
+        exit 1
+    fi
+
+    echo "Restoring snapshot with ID: $snapshot_subvol_id"
+
+    # Restore the snapshot over the root subvolume using subvolid
+    sudo btrfs subvolume restore -s subvolid=$snapshot_subvol_id -d subvolid=256  # 256 is typically the root subvolume ID
+
+    echo "Snapshot restored successfully."
+}
+
+# Main function
+main() {
+    # List snapshots by subvolume ID
+    echo "Listing available snapshots on root (using subvolume IDs):"
+    list_snapshots
+
+    # Prompt user for selection
+    echo "Please choose a snapshot by its number (e.g., 1, 2, ...):"
+    read -p "Snapshot number: " snapshot_id
+
+    # Check if input is a valid number
+    if ! [[ "$snapshot_id" =~ ^[0-9]+$ ]]; then
+        echo "Invalid input. Please enter a valid snapshot number."
+        exit 1
+    fi
+
+    # Restore the selected snapshot
+    restore_snapshot "$snapshot_id"
+}
+
+# Run the main function
+main
